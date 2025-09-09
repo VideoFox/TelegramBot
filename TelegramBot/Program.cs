@@ -130,7 +130,15 @@ namespace TelegramBot
         /// </summary>
         private static void GetHelp()
         {
-            Console.WriteLine("Тут будет справочная информация о боте");
+            Console.WriteLine("\u001b[36mДоступные команды:");
+            Console.WriteLine();
+
+            Console.WriteLine("\u001b[32m/start\u001b[0m - Начало работы с ботом");
+            Console.WriteLine("\u001b[32m/help  \u001b[0m- Справка");
+            Console.WriteLine("\u001b[32m/info  \u001b[0m- Информация о программе");
+            Console.WriteLine("\u001b[32m/exit  \u001b[0m- Выход");
+            Console.WriteLine("\u001b[32m/echo  \u001b[0m- Эхо команды");
+
             ReturnToMainMenu();
         }
 
