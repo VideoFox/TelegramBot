@@ -7,12 +7,17 @@ namespace TelegramBot
         // Имя пользователя
         public static string UserName { get; set; } = "";
 
-        public const string Version = "1.01";
+        // Список задач
+        public static List<string> TaskList { get; set; }
+
+        public const string Version = "1.02";
 
         static void Main(string[] args)
         {
             // Вывод приветствия
             SetStartTerminalColor();
+
+            TaskList = new List<string>();
 
             Console.WriteLine("\nИспользуйте \u001b[36m⬆️\u001b[0m и \u001b[36m⬇️\u001b[0m для навигации и нажмите \u001b[36m\u001b[36mEnter\u001b[0m для выбора:");
             Console.WriteLine();
@@ -94,12 +99,163 @@ namespace TelegramBot
 
                     break;
 
-                // /exit
+                //  / addtask
                 case 4:
+                    AddTask();
+                    break;
+
+                // /showtasks
+                case 5:
+                    ViewTasks();
+                    break;
+
+                // /removetask
+                case 6:
+                    RemoveTask();
+                    break;
+
+                // /exit
+                case 7:
 
                     Console.WriteLine("\u001b[36mЗавершение работы!\u001b[0m");
                     isExit = true;
                     break;
+            }
+        }
+        
+        /// <summary>
+        /// Создать задачу
+        /// </summary>
+        private static void AddTask()
+        {
+            while (true)
+            {
+                Console.Clear();
+
+                Console.WriteLine("Введите описание новой задачи:");
+                var output = Console.ReadLine()?.Trim();
+
+                if (!string.IsNullOrEmpty(output))
+                {
+                    TaskList.Add(output);
+                    Console.WriteLine("Задача добавлена в список");
+                    break;
+                }
+
+                Console.WriteLine("Не указано описание задачи!");
+                Console.Write("Ввести заново? <Y/N>");
+
+                bool isExit;
+
+                while (true)
+                {
+                    var keyInfo = Console.ReadKey();
+
+                    if (keyInfo.Key == ConsoleKey.N)
+                    {
+                        isExit = true;
+                        break;
+                    }
+
+                    if (keyInfo.Key == ConsoleKey.Y)
+                    {
+                        isExit = false;
+                        Console.WriteLine();
+                        break;
+                    }
+                }
+
+                if (isExit)
+                {
+                    break;
+                }
+            }
+
+            // Возврат в главное меню
+            ReturnToMainMenu();
+        }
+        
+        /// <summary>
+        /// Просмотреть задачи
+        /// </summary>
+        private static void ViewTasks()
+        {
+            Console.Clear();
+
+            // Вывод текущих задач
+            PrintTaskList();
+
+            // Возврат в главное меню
+            ReturnToMainMenu();
+        }
+
+        /// <summary>
+        /// Удалить задачу
+        /// </summary>
+        private static void RemoveTask()
+        {
+            while (true)
+            {
+                Console.Clear();
+
+                PrintTaskList();
+
+                Console.WriteLine("Укажите номер задачи для удаления:");
+                var output = Console.ReadLine()?.Trim();
+
+                if (!string.IsNullOrEmpty(output))
+                {
+                    try
+                    {
+                        var num = int.Parse(output);
+
+                        TaskList.RemoveAt(num - 1);
+
+                        Console.WriteLine($"Задача под номером {num} удалена");
+                        Console.WriteLine();
+                        break;
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        Console.WriteLine("Указан неверный номер задачи! Попробуйте заново");
+                        Console.WriteLine("Для продолжения нажмите любую клавишу...");
+                        Console.ReadKey();
+                    }
+                    catch (FormatException)
+                    {
+                        Console.WriteLine("Укажите целое число и попробуйте заново!");
+                        Console.WriteLine("Для продолжения нажмите любую клавишу...");
+                        Console.ReadKey();
+                    }
+                } 
+                else break;
+            }
+
+            // Возврат в главное меню
+            ReturnToMainMenu();
+        }
+        
+        /// <summary>
+        /// Вывод текущих задач
+        /// </summary>
+        private static void PrintTaskList()
+        {
+            if (TaskList.Count > 0)
+            {
+                Console.WriteLine("\u001b[36mСписок текущих задач\u001b[0m");
+                Console.WriteLine();
+
+                int i = 1;
+
+                foreach (var task in TaskList)
+                {
+                    Console.WriteLine(i + ". " + task);
+                    i++;
+                }
+            }
+            else
+            {
+                Console.WriteLine("\u001b[36mСписок текущих задач пуст!\u001b[0m");
             }
         }
 
@@ -133,12 +289,15 @@ namespace TelegramBot
             Console.WriteLine("\u001b[36mДоступные команды:");
             Console.WriteLine();
 
-            Console.WriteLine("\u001b[32m/start\u001b[0m - Начало работы с ботом");
-            Console.WriteLine("\u001b[32m/help  \u001b[0m- Справка");
-            Console.WriteLine("\u001b[32m/info  \u001b[0m- Информация о программе");
-            Console.WriteLine("\u001b[32m/exit  \u001b[0m- Выход");
-            Console.WriteLine("\u001b[32m/echo  \u001b[0m- Эхо команды");
-
+            Console.WriteLine("\u001b[32m/start      \u001b[0m - Начало работы с ботом");
+            Console.WriteLine("\u001b[32m/help        \u001b[0m- Справка");
+            Console.WriteLine("\u001b[32m/info        \u001b[0m- Информация о программе");
+            Console.WriteLine("\u001b[32m/echo        \u001b[0m- Эхо команды");
+            Console.WriteLine("\u001b[32m/addtask     \u001b[0m- Добавить текущую задачу");
+            Console.WriteLine("\u001b[32m/showtasks   \u001b[0m- Просмотр всех текущих задач");
+            Console.WriteLine("\u001b[32m/removetask  \u001b[0m- Удалить задачу по ее номеру");
+            Console.WriteLine("\u001b[32m/exit        \u001b[0m- Выход");
+            
             ReturnToMainMenu();
         }
 
@@ -192,10 +351,13 @@ namespace TelegramBot
             string outPutString4 = option == 3 ? decorator : "   ";
             if (!string.IsNullOrEmpty(UserName))
             {
-                outPutString4 = option == 4 ? decorator : "   ";
+                outPutString4 = option == 7 ? decorator : "   ";
             }
 
             string outPutString5 = option == 3 ? decorator : "   ";
+            string outPutString6 = option == 4 ? decorator : "   ";
+            string outPutString7 = option == 5 ? decorator : "   ";
+            string outPutString8 = option == 6 ? decorator : "   ";
 
             Console.WriteLine((option == 0 ? decorator : "   ") + "/start\u001b[0m");
             Console.WriteLine((option == 1 ? decorator : "   ") + "/help\u001b[0m");
@@ -204,11 +366,17 @@ namespace TelegramBot
             // Появляется после ввода имени пользователя
             if (!string.IsNullOrEmpty(UserName))
             {
-                maxNumMenuItems = 4;
+                maxNumMenuItems = 7;
                 Console.WriteLine(outPutString5 + "/echo\u001b[0m");
+                Console.WriteLine(outPutString6 + "/addtask\u001b[0m");
+                Console.WriteLine(outPutString7 + "/showtasks\u001b[0m");
+                Console.WriteLine(outPutString8 + "/removetask\u001b[0m");
+
             }
 
             Console.WriteLine(outPutString4 + "/exit\u001b[0m");
+
+
         }
 
         /// <summary>
