@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using HomeWorks;
 
 namespace TelegramBot
 {
@@ -12,52 +13,170 @@ namespace TelegramBot
 
         public const string Version = "1.02";
 
+        private static int taskCountLimit;
+
+        private static int taskLength;
+
+
         static void Main(string[] args)
         {
-            // Вывод приветствия
-            SetStartTerminalColor();
-
-            TaskList = new List<string>();
-
-            Console.WriteLine("\nИспользуйте \u001b[36m⬆️\u001b[0m и \u001b[36m⬇️\u001b[0m для навигации и нажмите \u001b[36m\u001b[36mEnter\u001b[0m для выбора:");
-            Console.WriteLine();
-
-            // Координаты курсора для возврата
-            var cursorLeft = Console.CursorLeft;
-            var cursorTop = Console.CursorTop;
-
-            // Значение по умолчанию
-            var option = 0;
-            var decorator = "√  \u001b[32m";
-
-            // Индекс последнего пункта меню
-            int maxNumMenuItems = 3;
-
-            bool isExit = false;
-
-            while (!isExit)
+            try
             {
-                // Запуск меню
-                MenuItemsStart(cursorLeft, cursorTop, option, decorator, ref maxNumMenuItems);
+                // Вывод приветствия
+                SetStartTerminalColor();
 
-                // Чтение нажатых клавиш
-                var key = Console.ReadKey(false);
+                //  Ввод числа максимального количества задач и обработка неверных результатов
+                if (!GetTaskCountLimit("Введите максимальное количество задач<Enter-выход из программы>:", out taskCountLimit)) return;
 
-                // Если не нажат Enter
-                if (!GetDownKey(ref option, ref key, ref maxNumMenuItems))
-                    continue;
+                //  Ввод числа максимального количества задач и обработка неверных результатов
+                if (!GetTaskCountLimit("Введите максимально допустимую длину задачи<Enter-выход из программы>:", out taskLength)) return;
 
-                if (key.Key == ConsoleKey.Enter)
+                TaskList = new List<string>();
+
+                Console.WriteLine(
+                    "\nИспользуйте \u001b[36m⬆️\u001b[0m и \u001b[36m⬇️\u001b[0m для навигации и нажмите \u001b[36m\u001b[36mEnter\u001b[0m для выбора:");
+                Console.WriteLine();
+
+                // Координаты курсора для возврата
+                var cursorLeft = Console.CursorLeft;
+                var cursorTop = Console.CursorTop;
+
+                // Значение по умолчанию
+                var option = 0;
+                var decorator = "√  \u001b[32m";
+
+                // Индекс последнего пункта меню
+                int maxNumMenuItems = 3;
+
+                bool isExit = false;
+
+                while (!isExit)
                 {
-                    Console.Clear();
+                    // Запуск меню
+                    MenuItemsStart(cursorLeft, cursorTop, option, decorator, ref maxNumMenuItems);
 
-                    // Выбор пользовательской команды
-                    GetUserCommands(option, ref isExit);
+                    // Чтение нажатых клавиш
+                    var key = Console.ReadKey(false);
+
+                    // Если не нажат Enter
+                    if (!GetDownKey(ref option, ref key, ref maxNumMenuItems))
+                        continue;
+
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        Console.Clear();
+
+                        // Выбор пользовательской команды
+                        try
+                        {
+                            GetUserCommands(option, ref isExit);
+                        }
+                        catch (TaskCountLimitException ex)
+                        {
+                            Console.Clear();
+                            Console.WriteLine(ex.Message);
+                            ReturnToMainMenu();
+                        }
+                        catch (TaskLengthLimitException ex)
+                        {
+                            Console.Clear();
+                            Console.WriteLine(ex.Message);
+                            ReturnToMainMenu();
+                        }
+                        catch (DuplicateTaskException ex)
+                        {
+                            Console.Clear();
+                            Console.WriteLine(ex.Message);
+                            ReturnToMainMenu();
+                        }
+                    }
                 }
+            }
+            catch (ArgumentException arg)
+            {
+                Console.WriteLine("Произошла ошибка ввода данных! " + arg.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Произошла непредвиденная ошибка:");
+                Console.WriteLine("Type: " + ex.GetType());
+                Console.WriteLine("Message: " + ex.Message);
+                Console.WriteLine("StackTrace: " + ex.StackTrace);
+                Console.WriteLine("InnerException: " + ex.InnerException);
             }
 
             Console.ReadLine();
         }
+
+        /// <summary>
+        /// Ввод числа максимального количества  и обработка неверных результатов
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private static bool GetTaskCountLimit(string msg, out int resOut)
+        {
+            resOut = 0;
+
+            while (true)
+            {
+                Console.WriteLine(msg);
+
+                var str = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(str))
+                {
+                    Console.WriteLine("Программа отменена!");
+                    return false;
+                }
+
+                try
+                {
+                    resOut = ParseAndValidateInt(str, 1, 100);
+                    break;
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Получение и проверка числа
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private static int ParseAndValidateInt(string? str, int min, int max)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                throw new ArgumentException("Строка не может быть пустой или null.");
+
+            if (!int.TryParse(str, out int result))
+                throw new ArgumentException("Указанная строка не является числом!");
+
+            if (result < min || result > max)
+                throw new ArgumentException($"Число должно быть в диапазоне от {min} до {max}.");
+
+            return result;
+        }
+
+        /// <summary>
+        /// Проверяет, что строка не равна null, не пуста и содержит хотя бы один символ, отличный от пробела.
+        /// </summary>
+        /// <param name="str"></param>
+        /// <exception cref="ArgumentException"></exception>
+        private static void ValidateString(string? str)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                throw new ArgumentException("Строка не может быть пустой, состоять только из пробелов или быть null.");
+
+        }
+
 
         /// <summary>
         /// Выбор пользовательской команды
@@ -122,7 +241,7 @@ namespace TelegramBot
                     break;
             }
         }
-        
+
         /// <summary>
         /// Создать задачу
         /// </summary>
@@ -130,16 +249,43 @@ namespace TelegramBot
         {
             while (true)
             {
+                if (TaskList.Count >= taskCountLimit)
+                {
+                    throw new TaskCountLimitException(taskCountLimit);
+                }
+
                 Console.Clear();
 
                 Console.WriteLine("Введите описание новой задачи:");
                 var output = Console.ReadLine()?.Trim();
 
-                if (!string.IsNullOrEmpty(output))
+                try
                 {
-                    TaskList.Add(output);
-                    Console.WriteLine("Задача добавлена в список");
-                    break;
+                    ValidateString(output);
+
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        if (output.Length > taskLength)
+                        {
+                            throw new TaskLengthLimitException(output.Length, taskLength);
+                        }
+
+                        if (TaskList.Contains(output))
+                        {
+                            throw new DuplicateTaskException(output);
+                        }
+
+
+                        TaskList.Add(output);
+                        Console.WriteLine("Задача добавлена в список");
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Console.Write("Ввести заново? <Y/N>");
+                    continue;
                 }
 
                 Console.WriteLine("Не указано описание задачи!");
@@ -174,7 +320,7 @@ namespace TelegramBot
             // Возврат в главное меню
             ReturnToMainMenu();
         }
-        
+
         /// <summary>
         /// Просмотреть задачи
         /// </summary>
@@ -227,14 +373,14 @@ namespace TelegramBot
                         Console.WriteLine("Для продолжения нажмите любую клавишу...");
                         Console.ReadKey();
                     }
-                } 
+                }
                 else break;
             }
 
             // Возврат в главное меню
             ReturnToMainMenu();
         }
-        
+
         /// <summary>
         /// Вывод текущих задач
         /// </summary>
@@ -297,7 +443,7 @@ namespace TelegramBot
             Console.WriteLine("\u001b[32m/showtasks   \u001b[0m- Просмотр всех текущих задач");
             Console.WriteLine("\u001b[32m/removetask  \u001b[0m- Удалить задачу по ее номеру");
             Console.WriteLine("\u001b[32m/exit        \u001b[0m- Выход");
-            
+
             ReturnToMainMenu();
         }
 
