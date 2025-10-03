@@ -31,7 +31,7 @@ namespace TelegramBot
                 //  Ввод числа максимального количества задач и обработка неверных результатов
                 if (!GetTaskCountLimit("Введите максимально допустимую длину задачи<Enter-выход из программы>:", out taskLength)) return;
 
-                TaskList = new List<string>();
+                TaskList = new List<string>(); 
 
                 Console.WriteLine(
                     "\nИспользуйте \u001b[36m⬆️\u001b[0m и \u001b[36m⬇️\u001b[0m для навигации и нажмите \u001b[36m\u001b[36mEnter\u001b[0m для выбора:");
