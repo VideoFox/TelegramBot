@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="C:\Users\Yuriy\source\repos\TelegramBotToDoList\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+  </ItemGroup>
+
 </Project>
